@@ -1,0 +1,2098 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model action_plan_notes {
+  id                  Int               @id @default(autoincrement()) @db.UnsignedInt
+  customer_product_id Int?              @db.UnsignedInt
+  user_id             Int?              @db.UnsignedInt
+  text                String?           @db.LongText
+  created_at          DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customer_product    customer_product? @relation(fields: [customer_product_id], references: [id], onDelete: Restrict, map: "action_plan_notes_customer_product_id_foreign")
+
+  @@index([customer_product_id], map: "action_plan_notes_customer_product_id_foreign")
+}
+
+model ap_entities {
+  id          Int              @id @default(autoincrement()) @db.UnsignedInt
+  label       String           @db.Text
+  product_id  Int?             @db.UnsignedInt
+  href        String           @db.Text
+  type        ap_entities_type
+  plan_id     Int
+  rating      Int?
+  section_id  Int              @db.UnsignedInt
+  ordinal     Int
+  visible     Boolean          @default(true)
+  description String           @db.Text
+  created_at  DateTime         @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime         @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  pills_json  String           @db.Text
+  products    products?        @relation(fields: [product_id], references: [id], onDelete: Restrict, map: "ap_entities_product_id_foreign")
+  ap_sections ap_sections      @relation(fields: [section_id], references: [id], map: "ap_entities_section_id_foreign")
+  ap_notes    ap_notes[]
+  ap_pills    ap_pills[]
+
+  @@index([product_id], map: "ap_entities_product_id_foreign")
+  @@index([section_id], map: "ap_entities_section_id_foreign")
+}
+
+model ap_goals {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  text        String    @db.LongText
+  ap_plan_id  Int       @db.UnsignedInt
+  customer_id Int       @db.UnsignedInt
+  created_at  DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  ap_plans    ap_plans  @relation(fields: [ap_plan_id], references: [id], map: "ap_goals_ap_plan_id_foreign")
+  customers   customers @relation(fields: [customer_id], references: [id], map: "ap_goals_customer_id_foreign")
+
+  @@index([ap_plan_id], map: "ap_goals_ap_plan_id_foreign")
+  @@index([customer_id], map: "ap_goals_customer_id_foreign")
+}
+
+model ap_map_plan_section {
+  id          Int         @id @default(autoincrement()) @db.UnsignedInt
+  plan_id     Int         @db.UnsignedInt
+  section_id  Int         @db.UnsignedInt
+  ordinal     Int
+  visible     Boolean     @default(true)
+  created_at  DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  ap_plans    ap_plans    @relation(fields: [plan_id], references: [id], map: "ap_map_plan_section_plan_id_foreign")
+  ap_sections ap_sections @relation(fields: [section_id], references: [id], map: "ap_map_plan_section_section_id_foreign")
+
+  @@index([plan_id], map: "ap_map_plan_section_plan_id_foreign")
+  @@index([section_id], map: "ap_map_plan_section_section_id_foreign")
+}
+
+model ap_notes {
+  id          Int         @id @default(autoincrement()) @db.UnsignedInt
+  text        String      @db.LongText
+  entity_id   Int         @db.UnsignedInt
+  customer_id Int         @db.UnsignedInt
+  created_at  DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers   customers   @relation(fields: [customer_id], references: [id], map: "ap_notes_customer_id_foreign")
+  ap_entities ap_entities @relation(fields: [entity_id], references: [id], map: "ap_notes_entity_id_foreign")
+
+  @@index([customer_id], map: "ap_notes_customer_id_foreign")
+  @@index([entity_id], map: "ap_notes_entity_id_foreign")
+}
+
+model ap_pills {
+  id                 Int         @id @default(autoincrement()) @db.UnsignedInt
+  text               String      @db.Text
+  color              String      @db.Text
+  entity_id          Int         @db.UnsignedInt
+  product_is_visible Int         @default(0)
+  created_at         DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at         DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  ap_entities        ap_entities @relation(fields: [entity_id], references: [id], map: "ap_pills_entity_id_foreign")
+
+  @@index([entity_id], map: "ap_pills_entity_id_foreign")
+}
+
+model ap_plan_types {
+  id          Int           @id @default(autoincrement()) @db.UnsignedInt
+  label       String        @db.Text
+  created_at  DateTime      @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime      @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  ap_plans    ap_plans[]
+  ap_sections ap_sections[]
+}
+
+model ap_plans {
+  id                  Int                   @id @default(autoincrement()) @db.UnsignedInt
+  customer_id         Int                   @db.UnsignedInt
+  plan_type_id        Int                   @db.UnsignedInt
+  goals               String                @db.LongText
+  progress            String                @db.LongText
+  created_at          DateTime              @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime              @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers           customers             @relation(fields: [customer_id], references: [id], map: "ap_plans_customer_id_foreign")
+  ap_plan_types       ap_plan_types         @relation(fields: [plan_type_id], references: [id], map: "ap_plans_plan_type_id_foreign")
+  ap_goals            ap_goals[]
+  ap_map_plan_section ap_map_plan_section[]
+  ap_progress         ap_progress[]
+
+  @@index([customer_id], map: "ap_plans_customer_id_foreign")
+  @@index([plan_type_id], map: "ap_plans_plan_type_id_foreign")
+}
+
+model ap_progress {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  text        String    @db.LongText
+  ap_plan_id  Int       @db.UnsignedInt
+  customer_id Int       @db.UnsignedInt
+  created_at  DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  ap_plans    ap_plans  @relation(fields: [ap_plan_id], references: [id], map: "ap_progress_ap_plan_id_foreign")
+  customers   customers @relation(fields: [customer_id], references: [id], map: "ap_progress_customer_id_foreign")
+
+  @@index([ap_plan_id], map: "ap_progress_ap_plan_id_foreign")
+  @@index([customer_id], map: "ap_progress_customer_id_foreign")
+}
+
+model ap_sections {
+  id                  Int                   @id @default(autoincrement()) @db.UnsignedInt
+  plan_type_id        Int                   @db.UnsignedInt
+  academic_skills_ids String?               @db.Text
+  product_types_ids   String?               @db.Text
+  themes_ids          String?               @db.Text
+  ordinal             Int
+  label               String                @db.Text
+  description         String?               @db.Text
+  created_at          DateTime              @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime              @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  ap_plan_types       ap_plan_types         @relation(fields: [plan_type_id], references: [id], map: "ap_sections_plan_type_id_foreign")
+  ap_entities         ap_entities[]
+  ap_map_plan_section ap_map_plan_section[]
+
+  @@index([plan_type_id], map: "ap_sections_plan_type_id_foreign")
+}
+
+model api_keys {
+  id            Int        @id @default(autoincrement()) @db.UnsignedInt
+  user_id       Int        @db.UnsignedInt
+  key           String     @unique(map: "api_keys_key_unique") @db.VarChar(40)
+  level         Int        @db.SmallInt
+  ignore_limits Boolean
+  created_at    DateTime?  @db.Timestamp(0)
+  updated_at    DateTime?  @db.Timestamp(0)
+  deleted_at    DateTime?  @db.Timestamp(0)
+  api_logs      api_logs[]
+}
+
+model api_logs {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  api_key_id Int?      @db.UnsignedInt
+  route      String    @db.VarChar(50)
+  method     String    @db.VarChar(6)
+  params     String    @db.Text
+  ip_address String    @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  api_keys   api_keys? @relation(fields: [api_key_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "api_logs_api_key_id_foreign")
+
+  @@index([api_key_id], map: "api_logs_api_key_id_foreign")
+  @@index([method], map: "api_logs_method_index")
+  @@index([route], map: "api_logs_route_index")
+}
+
+model assessments {
+  id          Int        @id @default(autoincrement()) @db.UnsignedInt
+  token       String     @db.VarChar(255)
+  customer_id Int?       @db.UnsignedInt
+  data        String?    @db.LongText
+  completed   Boolean    @default(false)
+  created_at  DateTime   @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at  DateTime   @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers   customers? @relation(fields: [customer_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "assessments_customer_id_foreign")
+
+  @@index([customer_id], map: "assessments_customer_id_foreign")
+}
+
+model browser_log {
+  id             Int     @id @default(autoincrement()) @db.UnsignedInt
+  logged_in_user Int?    @db.UnsignedInt
+  customer_id    Int?    @db.UnsignedInt
+  browscap       String? @db.LongText
+  server         String? @db.LongText
+  ip_details     String? @db.LongText
+  plugins        String? @db.LongText
+  created_at     String? @db.VarChar(255)
+}
+
+model cache {
+  key        String @unique(map: "cache_key_unique") @db.VarChar(255)
+  value      String @db.Text
+  expiration Int
+}
+
+model clinician_summary_jobs {
+  id                  BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  customer_id         Int
+  learning_profile_id Int
+  attempts            Int       @default(0)
+  last_error          String?   @db.LongText
+  reserved_at         DateTime? @db.Timestamp(0)
+  completed_at        DateTime? @db.Timestamp(0)
+  created_at          DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model coupons {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  code       String    @default("") @db.VarChar(100)
+  type       String    @default("") @db.VarChar(100)
+  value      Decimal   @db.Decimal(5, 2)
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+}
+
+model customer_cognitive_skills_lookup {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  learning_profile_id Int      @db.UnsignedInt
+  assessed_at         DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model customer_customer {
+  id                        Int     @id @default(autoincrement()) @db.UnsignedInt
+  customer_id_adult         Int
+  customer_id_child         Int
+  can_administer_assessment Boolean @default(false)
+
+  @@unique([customer_id_adult, customer_id_child], map: "customer_id_adult_customer_id_children")
+}
+
+model customer_product {
+  id                Int                   @id @default(autoincrement()) @db.UnsignedInt
+  customer_id       Int?
+  product_id        Int?
+  completed         Boolean               @default(false)
+  created_at        DateTime              @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at        DateTime              @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  type              customer_product_type @default(product)
+  action_plan_notes action_plan_notes[]
+}
+
+model customer_profile_dimensions_lookup {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  learning_profile_id Int      @db.UnsignedInt
+  dimension_id        Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  final_score         String   @db.VarChar(255)
+  final_range         String   @db.VarChar(255)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  top_products        String?  @db.VarChar(255)
+  is_processed        Int      @default(0)
+}
+
+model customer_profile_dimensions_lookup_feb19 {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  learning_profile_id Int      @db.UnsignedInt
+  dimension_id        Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  final_score         String   @db.VarChar(255)
+  final_range         String   @db.VarChar(255)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  top_products        String?  @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model customer_profile_dimensions_lookup_top_products {
+  id                  Int      @default(0) @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  learning_profile_id Int      @db.UnsignedInt
+  dimension_id        Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  final_score         String   @db.VarChar(255)
+  final_range         String   @db.VarChar(255)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  top_products        String?  @db.VarChar(255)
+
+  @@ignore
+}
+
+model customer_resources {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  customer_id  Int       @db.UnsignedInt
+  resource_url String?   @db.LongText
+  title        String?   @db.Text
+  created_at   DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at   DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers    customers @relation(fields: [customer_id], references: [id], map: "customer_resources_customer_id_foreign")
+
+  @@index([customer_id], map: "customer_resources_customer_id_foreign")
+}
+
+model customers {
+  id                           Int                            @id @default(autoincrement()) @db.UnsignedInt
+  family_id                    Int                            @db.UnsignedInt
+  nwea_bid                     String?                        @db.VarChar(64)
+  member                       Int                            @default(1)
+  plan_id                      Int?                           @db.UnsignedInt
+  plan_expires                 Int?                           @db.UnsignedInt
+  primary                      Boolean?
+  is_business_override         Boolean                        @default(false)
+  can_assess                   Int?                           @default(0) @db.UnsignedTinyInt
+  active                       Boolean                        @default(true)
+  email                        String?                        @db.VarChar(100)
+  username                     String?                        @db.LongText
+  password                     String?                        @db.VarChar(100)
+  logins                       Int                            @default(0)
+  token                        String?                        @db.VarChar(100)
+  first_name                   String?                        @db.LongText
+  last_name                    String?                        @db.LongText
+  display_name                 String?                        @db.LongText
+  display_name_expanded        Boolean                        @default(true)
+  type                         customers_type                 @default(adult)
+  gender                       customers_gender?
+  birthdate                    DateTime?                      @db.Date
+  evaluation_date              DateTime?                      @db.Date
+  questionnaire                String?                        @db.Text
+  learning_profile             String?                        @db.Text
+  interests                    String?                        @db.Text
+  coupon_code                  String?                        @default("") @db.VarChar(100)
+  remember_token               String?                        @db.VarChar(255)
+  created_at                   DateTime?                      @db.DateTime(0)
+  updated_at                   DateTime?                      @db.DateTime(0)
+  persona                      String?                        @db.VarChar(255)
+  username_hash                String?                        @db.VarChar(255)
+  last_login_at                DateTime?                      @db.Timestamp(0)
+  is_active                    Boolean?                       @default(true)
+  external_identifier          String?                        @default("") @db.VarChar(255)
+  state                        String?                        @db.VarChar(255)
+  school_name                  String?                        @db.VarChar(255)
+  is_expired                   Boolean                        @default(false)
+  code                         String?                        @default("") @db.VarChar(255)
+  deleted_at                   DateTime?                      @db.DateTime(0)
+  ap_goals                     ap_goals[]
+  ap_notes                     ap_notes[]
+  ap_plans                     ap_plans[]
+  ap_progress                  ap_progress[]
+  assessments                  assessments[]
+  customer_resources           customer_resources[]
+  entrust_assigned_roles       entrust_assigned_roles[]
+  q_instances                  q_instances[]
+  q_map_customer_questionnaire q_map_customer_questionnaire[]
+  q_shared                     q_shared[]
+  tp_reports                   tp_reports[]
+
+  @@unique([family_id, member], map: "family_id_member")
+  @@unique([family_id, primary], map: "family_id_primary")
+}
+
+model customers_backup {
+  id                    Int                      @id @default(autoincrement()) @db.UnsignedInt
+  family_id             Int                      @db.UnsignedInt
+  member                Int                      @default(1)
+  plan_id               Int?                     @db.UnsignedInt
+  plan_expires          Int?                     @db.UnsignedInt
+  primary               Boolean?
+  is_business_override  Boolean                  @default(false)
+  can_assess            Int?                     @default(0) @db.UnsignedTinyInt
+  active                Boolean                  @default(true)
+  email                 String?                  @db.VarChar(100)
+  username              String?                  @db.LongText
+  password              String?                  @db.VarChar(100)
+  logins                Int                      @default(0)
+  token                 String?                  @db.VarChar(100)
+  first_name            String?                  @db.LongText
+  last_name             String?                  @db.LongText
+  display_name          String?                  @db.LongText
+  display_name_expanded Boolean                  @default(true)
+  type                  customers_backup_type    @default(adult)
+  gender                customers_backup_gender?
+  birthdate             DateTime?                @db.Date
+  evaluation_date       DateTime?                @db.Date
+  questionnaire         String?                  @db.Text
+  learning_profile      String?                  @db.Text
+  interests             String?                  @db.Text
+  coupon_code           String?                  @default("") @db.VarChar(100)
+  remember_token        String?                  @db.VarChar(255)
+  created_at            DateTime?                @db.DateTime(0)
+  updated_at            DateTime?                @db.DateTime(0)
+  persona               String?                  @db.VarChar(255)
+  username_hash         String?                  @db.VarChar(255)
+  last_login_at         DateTime?                @db.Timestamp(0)
+  is_active             Boolean?                 @default(true)
+  external_identifier   String                   @db.VarChar(255)
+
+  @@unique([family_id, member], map: "family_id_member")
+  @@unique([family_id, primary], map: "family_id_primary")
+}
+
+model dashboards {
+  id             Int     @id @default(autoincrement()) @db.UnsignedInt
+  internal_name  String? @db.VarChar(255)
+  external_name  String? @db.VarChar(255)
+  dimension_sets String? @db.VarChar(255)
+  min_age        Int?
+  max_age        Int?
+  use_as_grade   Boolean @default(true)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model dashboards_archive {
+  id             Int     @default(0) @db.UnsignedInt
+  internal_name  String? @db.VarChar(255)
+  external_name  String? @db.VarChar(255)
+  dimension_sets String? @db.VarChar(255)
+  min_age        Int?
+  max_age        Int?
+
+  @@ignore
+}
+
+model deactivation_log {
+  id                         Int      @id @default(autoincrement()) @db.UnsignedInt
+  deactivating_customer_id   Int
+  customer_being_deactivated Int
+  created_at                 DateTime @db.DateTime(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model dimension_archive {
+  id                   Int     @default(0) @db.UnsignedInt
+  code                 String? @db.VarChar(255)
+  name                 String? @db.VarChar(255)
+  note                 String? @db.VarChar(255)
+  weight_primary       String  @default("3") @db.VarChar(255)
+  weight_secondary     String  @default("2") @db.VarChar(255)
+  weight_tertiary      String  @default("1") @db.VarChar(255)
+  strength_range_start String  @default("27") @db.VarChar(255)
+  weakness_range_start String  @default("-27") @db.VarChar(255)
+  point_match          String? @db.Text
+  dimension_data_map   String? @db.Text
+  academic_topics      String? @db.VarChar(255)
+  product_types        String? @db.VarChar(255)
+  themes               String? @db.VarChar(255)
+
+  @@ignore
+}
+
+model dimension_sets {
+  id                             Int     @id @default(autoincrement()) @db.UnsignedInt
+  internal_name                  String? @db.VarChar(255)
+  external_name                  String? @db.VarChar(255)
+  dimensions                     String? @db.VarChar(255)
+  custom_label_for_support       String? @db.VarChar(255)
+  custom_label_for_watch         String? @db.VarChar(255)
+  custom_label_for_nurture       String? @db.VarChar(255)
+  custom_description_for_support String? @db.VarChar(255)
+  custom_description_for_watch   String? @db.VarChar(255)
+  custom_description_for_nurture String? @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model dimension_sets_archive {
+  id            Int     @default(0) @db.UnsignedInt
+  internal_name String? @db.VarChar(255)
+  external_name String? @db.VarChar(255)
+  dimensions    String? @db.VarChar(255)
+
+  @@ignore
+}
+
+model dimensions {
+  id                   Int     @id @default(autoincrement()) @db.UnsignedInt
+  code                 String? @db.VarChar(255)
+  name                 String? @db.VarChar(255)
+  note                 String? @db.VarChar(255)
+  weight_primary       String  @default("3") @db.VarChar(255)
+  weight_secondary     String  @default("2") @db.VarChar(255)
+  weight_tertiary      String  @default("1") @db.VarChar(255)
+  strength_range_start String  @default("27") @db.VarChar(255)
+  weakness_range_start String  @default("-27") @db.VarChar(255)
+  point_match          String? @db.Text
+  dimension_data_map   String? @db.Text
+  academic_topics      String? @db.VarChar(255)
+  product_types        String? @db.VarChar(255)
+  themes               String? @db.VarChar(255)
+  give_support         String? @db.VarChar(255)
+  watch_carefully      String? @db.VarChar(255)
+  continue_strengthen  String? @db.VarChar(255)
+  tooltip_text         String? @db.VarChar(255)
+}
+
+model ea_external_assessments {
+  id                         Int       @id @default(autoincrement()) @db.UnsignedInt
+  mindprint_customer_id      Int
+  family_id                  Int?
+  test_session_date          DateTime? @db.Date
+  student_grade              Int?
+  english_language_learner   Boolean?
+  special_education          Boolean?
+  economically_disadvantaged Boolean?
+  migrant                    Boolean?
+  extended_time              Boolean?
+  test_name                  String?   @db.VarChar(255)
+  untimed                    Boolean?
+  test_subject               String?   @db.VarChar(255)
+  test_topic                 String?   @db.VarChar(255)
+  test_term                  String?   @db.VarChar(255)
+  test_academic_year_start   Int?
+  test_academic_year_end     Int?
+  student_age                Int?
+  student_diagnostic_score   Int?
+  student_percentile_score   Float?    @db.Float
+  projected_growth           Int?
+  actual_growth              Int?
+  performance_categorization String?   @db.VarChar(255)
+  diagnostic_time_on_task    Int?
+  diagnostic_rush_flag       Boolean?
+  diagnostic_placement       String?   @db.VarChar(255)
+  created_at                 DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at                 DateTime  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model email_queue {
+  id              Int      @id @default(autoincrement()) @db.UnsignedInt
+  uid_type        String   @db.VarChar(255)
+  uid_value       String   @db.VarChar(255)
+  queue_name      String   @db.VarChar(255)
+  recipient_email String   @db.VarChar(255)
+  email_subject   String   @db.VarChar(255)
+  html            String   @db.LongText
+  send_at         DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  sent            Boolean  @default(false)
+  created_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model entrust_assigned_roles {
+  id            Int           @id @default(autoincrement()) @db.UnsignedInt
+  user_id       Int           @db.UnsignedInt
+  role_id       Int           @db.UnsignedInt
+  entrust_roles entrust_roles @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "entrust_assigned_roles_role_id_foreign")
+  customers     customers     @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "entrust_assigned_roles_user_id_foreign")
+
+  @@index([role_id], map: "entrust_assigned_roles_role_id_foreign")
+  @@index([user_id], map: "entrust_assigned_roles_user_id_foreign")
+}
+
+model entrust_permission_role {
+  id                  Int                 @id @default(autoincrement()) @db.UnsignedInt
+  permission_id       Int                 @db.UnsignedInt
+  role_id             Int                 @db.UnsignedInt
+  entrust_permissions entrust_permissions @relation(fields: [permission_id], references: [id], onUpdate: Restrict, map: "entrust_permission_role_permission_id_foreign")
+  entrust_roles       entrust_roles       @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "entrust_permission_role_role_id_foreign")
+
+  @@index([permission_id], map: "entrust_permission_role_permission_id_foreign")
+  @@index([role_id], map: "entrust_permission_role_role_id_foreign")
+}
+
+model entrust_permissions {
+  id                      Int                       @id @default(autoincrement()) @db.UnsignedInt
+  name                    String                    @unique(map: "entrust_permissions_name_unique") @db.VarChar(255)
+  display_name            String                    @db.VarChar(255)
+  created_at              DateTime                  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at              DateTime                  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  entrust_permission_role entrust_permission_role[]
+}
+
+model entrust_roles {
+  id                      Int                       @id @default(autoincrement()) @db.UnsignedInt
+  name                    String                    @unique(map: "entrust_roles_name_unique") @db.VarChar(255)
+  created_at              DateTime                  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at              DateTime                  @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  entrust_assigned_roles  entrust_assigned_roles[]
+  entrust_permission_role entrust_permission_role[]
+}
+
+model event_tracking {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  data       String   @db.LongText
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model families {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  name         String?   @db.VarChar(255)
+  confirmation String?   @db.Text
+  created_at   DateTime? @db.DateTime(0)
+  updated_at   DateTime? @db.DateTime(0)
+}
+
+model feature_academic_features {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_academic_skills {
+  id           Int     @id @default(autoincrement()) @db.UnsignedInt
+  parent_id    Int     @default(0) @db.UnsignedInt
+  entry        String  @db.VarChar(100)
+  search_terms String? @db.VarChar(255)
+}
+
+model feature_cognitive_features {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_cognitive_skills {
+  id                               Int                                @id @default(autoincrement()) @db.UnsignedInt
+  entry                            String                             @db.VarChar(255)
+  details                          String                             @db.VarChar(255)
+  article_id                       Int?                               @db.UnsignedInt
+  feature_cognitive_skills_aliases feature_cognitive_skills_aliases[]
+  q_map_option_cognitive_skill     q_map_option_cognitive_skill[]
+}
+
+model feature_cognitive_skills_aliases {
+  id                       Int                      @id @default(autoincrement()) @db.UnsignedInt
+  cognitive_skill_id       Int                      @db.UnsignedInt
+  alias                    String                   @db.Text
+  score_base               Int
+  score_extra              Int
+  feature_cognitive_skills feature_cognitive_skills @relation(fields: [cognitive_skill_id], references: [id], map: "feature_cognitive_skills_aliases_cognitive_skill_id_foreign")
+
+  @@index([cognitive_skill_id], map: "feature_cognitive_skills_aliases_cognitive_skill_id_foreign")
+}
+
+model feature_enjoyability {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_game_types {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_interests {
+  id           Int     @id @default(autoincrement()) @db.UnsignedInt
+  category     String? @db.VarChar(255)
+  entry        String  @db.VarChar(255)
+  search_terms String? @db.VarChar(255)
+}
+
+model feature_not_recommended_elements {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_requirements {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_tags {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @default("") @db.VarChar(255)
+}
+
+model feature_themes {
+  id    Int     @id @default(autoincrement()) @db.UnsignedInt
+  entry String  @db.Text
+  icon  String? @db.Text
+}
+
+model feature_to_feature {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  feature_1 String @db.VarChar(255)
+  entry_1   Int
+  feature_2 String @db.VarChar(255)
+  entry_2   Int
+}
+
+model feature_usability {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model feature_warnings {
+  id    Int    @id @default(autoincrement()) @db.UnsignedInt
+  entry String @db.VarChar(255)
+}
+
+model generic_groups {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  org_id     Int      @db.UnsignedInt
+  parent_id  Int      @default(0) @db.UnsignedInt
+  name       String   @db.VarChar(255)
+  type       String   @db.VarChar(255)
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  grade      Int?
+}
+
+model groupable_members {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  group_id   Int      @db.UnsignedInt
+  group_type String   @db.VarChar(255)
+  user_id    Int      @db.UnsignedInt
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model groupable_roles {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  group_id   Int      @db.UnsignedInt
+  group_type String   @db.VarChar(255)
+  user_id    Int      @db.UnsignedInt
+  role       String   @db.VarChar(255)
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model groupables {
+  id             Int      @id @default(autoincrement()) @db.UnsignedInt
+  group_id       Int      @db.UnsignedInt
+  group_type     String   @db.VarChar(255)
+  groupable_id   Int      @db.UnsignedInt
+  groupable_type String   @db.VarChar(255)
+  created_at     DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at     DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model impersonators {
+  id            Int      @id @default(autoincrement()) @db.UnsignedInt
+  admin_user_id Int?     @db.UnsignedInt
+  customer_id   Int?     @db.UnsignedInt
+  token         String?  @db.Text
+  created_at    DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at    DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  used          Int      @default(0) @db.UnsignedInt
+  type          String   @default("admin") @db.VarChar(255)
+}
+
+model learning_profile_copy_blocks {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  test       String?   @db.VarChar(255)
+  category   String?   @db.VarChar(255)
+  body       String?   @db.Text
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+}
+
+model learning_profile_notes {
+  id                  Int       @id @default(autoincrement()) @db.UnsignedInt
+  learning_profile_id Int
+  user_id             Int?
+  text                String?   @db.LongText
+  created_at          DateTime? @db.DateTime(0)
+  updated_at          DateTime? @db.DateTime(0)
+}
+
+model learning_profile_templates {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  name       String    @db.VarChar(255)
+  body       String    @db.MediumText
+  created_at DateTime? @db.DateTime(0)
+  updated_at DateTime? @db.DateTime(0)
+}
+
+model learning_profiles {
+  id                                Int                             @id @default(autoincrement()) @db.UnsignedInt
+  customer_id                       Int                             @db.UnsignedInt
+  family_id                         Int                             @db.UnsignedInt
+  member_id                         Int                             @db.UnsignedInt
+  user_id                           Int?                            @db.UnsignedInt
+  user_id_approved                  Int?                            @db.UnsignedInt
+  learning_profile_template_id      Int?                            @default(1) @db.UnsignedInt
+  subid                             String                          @default("") @db.VarChar(25)
+  results                           String?                         @db.Text
+  compiled                          String?                         @db.LongText
+  status                            learning_profiles_status?
+  report_text                       String?                         @db.Text
+  clinician_summary                 String?                         @db.Text
+  created_at                        DateTime?                       @db.DateTime(0)
+  updated_at                        DateTime?                       @db.DateTime(0)
+  completed_at                      DateTime?                       @db.DateTime(0)
+  due_at                            DateTime?                       @db.DateTime(0)
+  assigned_at                       DateTime?                       @db.DateTime(0)
+  approved_at                       DateTime?                       @db.DateTime(0)
+  visual_motor_speed_accuracy       Decimal?                        @db.Decimal(10, 4)
+  visual_motor_speed_speed          Decimal?                        @db.Decimal(10, 4)
+  visual_motor_speed_validity       Boolean?
+  flexible_thinking_accuracy        Decimal?                        @db.Decimal(10, 4)
+  flexible_thinking_speed           Decimal?                        @db.Decimal(10, 4)
+  flexible_thinking_efficiency      Decimal?                        @db.Decimal(10, 4)
+  flexible_thinking_validity        Boolean?
+  spatial_perception_validity       Boolean?
+  attention_accuracy                Decimal?                        @db.Decimal(10, 4)
+  attention_speed                   Decimal?                        @db.Decimal(10, 4)
+  attention_efficiency              Decimal?                        @db.Decimal(10, 4)
+  attention_validity                Boolean?
+  working_memory_accuracy           Decimal?                        @db.Decimal(10, 4)
+  working_memory_speed              Decimal?                        @db.Decimal(10, 4)
+  working_memory_efficiency         Decimal?                        @db.Decimal(10, 4)
+  working_memory_validity           Boolean?
+  visual_memory_accuracy            Decimal?                        @db.Decimal(10, 4)
+  visual_memory_speed               Decimal?                        @db.Decimal(10, 4)
+  visual_memory_validity            Boolean?
+  verbal_memory_accuracy            Decimal?                        @db.Decimal(10, 4)
+  verbal_memory_speed               Decimal?                        @db.Decimal(10, 4)
+  verbal_memory_validity            Boolean?
+  abstract_reasoning_accuracy       Decimal?                        @db.Decimal(10, 4)
+  abstract_reasoning_speed          Decimal?                        @db.Decimal(10, 4)
+  abstract_reasoning_validity       Boolean?
+  verbal_reasoning_accuracy         Decimal?                        @db.Decimal(10, 4)
+  verbal_reasoning_speed            Decimal?                        @db.Decimal(10, 4)
+  verbal_reasoning_validity         Boolean?
+  spatial_perception_accuracy       Decimal?                        @db.Decimal(10, 4)
+  spatial_perception_speed          Decimal?                        @db.Decimal(10, 4)
+  spatial_perception_efficiency     Decimal?                        @db.Decimal(10, 4)
+  processing_speed_speed            Decimal?                        @db.Decimal(10, 4)
+  processing_speed_validity         Boolean?
+  reversals                         Decimal?                        @db.Decimal(10, 0)
+  display_mode                      learning_profiles_display_mode? @default(default)
+  proctor_feedback                  String?                         @db.LongText
+  clinician_summary_strengths       String?                         @db.LongText
+  clinician_summary_needs           String?                         @db.LongText
+  clinician_summary_recommendations String?                         @db.LongText
+  is_trial                          Boolean                         @default(false)
+  has_cnb_records                   Boolean                         @default(false)
+  has_cnb_records_timestamp         DateTime                        @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  clinician_summary_overall         String?                         @db.LongText
+  clinician_summary_reading         String?                         @db.LongText
+  clinician_summary_english         String?                         @db.LongText
+  clinician_summary_math            String?                         @db.LongText
+  clinician_summary_science         String?                         @db.LongText
+  nwea_predict_scores               String?                         @db.LongText
+  deleted_at                        DateTime?                       @db.DateTime(0)
+  tp_reports                        tp_reports[]
+
+  @@index([customer_id], map: "customer_id")
+}
+
+model learning_profiles_backup {
+  id                                Int                                    @id @default(autoincrement()) @db.UnsignedInt
+  customer_id                       Int                                    @db.UnsignedInt
+  family_id                         Int                                    @db.UnsignedInt
+  member_id                         Int                                    @db.UnsignedInt
+  user_id                           Int?                                   @db.UnsignedInt
+  user_id_approved                  Int?                                   @db.UnsignedInt
+  learning_profile_template_id      Int?                                   @default(1) @db.UnsignedInt
+  subid                             String                                 @default("") @db.VarChar(25)
+  results                           String?                                @db.Text
+  compiled                          String?                                @db.Text
+  status                            learning_profiles_backup_status?
+  report_text                       String?                                @db.Text
+  clinician_summary                 String?                                @db.Text
+  created_at                        DateTime?                              @db.DateTime(0)
+  updated_at                        DateTime?                              @db.DateTime(0)
+  completed_at                      DateTime?                              @db.DateTime(0)
+  due_at                            DateTime?                              @db.DateTime(0)
+  assigned_at                       DateTime?                              @db.DateTime(0)
+  approved_at                       DateTime?                              @db.DateTime(0)
+  visual_motor_speed_accuracy       Decimal?                               @db.Decimal(10, 4)
+  visual_motor_speed_speed          Decimal?                               @db.Decimal(10, 4)
+  visual_motor_speed_validity       Boolean?
+  flexible_thinking_accuracy        Decimal?                               @db.Decimal(10, 4)
+  flexible_thinking_speed           Decimal?                               @db.Decimal(10, 4)
+  flexible_thinking_efficiency      Decimal?                               @db.Decimal(10, 4)
+  flexible_thinking_validity        Boolean?
+  attention_accuracy                Decimal?                               @db.Decimal(10, 4)
+  attention_speed                   Decimal?                               @db.Decimal(10, 4)
+  attention_efficiency              Decimal?                               @db.Decimal(10, 4)
+  attention_validity                Boolean?
+  working_memory_accuracy           Decimal?                               @db.Decimal(10, 4)
+  working_memory_speed              Decimal?                               @db.Decimal(10, 4)
+  working_memory_efficiency         Decimal?                               @db.Decimal(10, 4)
+  working_memory_validity           Boolean?
+  visual_memory_accuracy            Decimal?                               @db.Decimal(10, 4)
+  visual_memory_speed               Decimal?                               @db.Decimal(10, 4)
+  visual_memory_validity            Boolean?
+  verbal_memory_accuracy            Decimal?                               @db.Decimal(10, 4)
+  verbal_memory_speed               Decimal?                               @db.Decimal(10, 4)
+  verbal_memory_validity            Boolean?
+  abstract_reasoning_accuracy       Decimal?                               @db.Decimal(10, 4)
+  abstract_reasoning_speed          Decimal?                               @db.Decimal(10, 4)
+  abstract_reasoning_validity       Boolean?
+  verbal_reasoning_accuracy         Decimal?                               @db.Decimal(10, 4)
+  verbal_reasoning_speed            Decimal?                               @db.Decimal(10, 4)
+  verbal_reasoning_validity         Boolean?
+  spatial_perception_accuracy       Decimal?                               @db.Decimal(10, 4)
+  spatial_perception_speed          Decimal?                               @db.Decimal(10, 4)
+  spatial_perception_efficiency     Decimal?                               @db.Decimal(10, 4)
+  spatial_perception_validity       Boolean?
+  processing_speed_speed            Decimal?                               @db.Decimal(10, 4)
+  processing_speed_validity         Boolean?
+  reversals                         Decimal?                               @db.Decimal(10, 0)
+  display_mode                      learning_profiles_backup_display_mode? @default(default)
+  proctor_feedback                  String?                                @db.LongText
+  clinician_summary_strengths       String?                                @db.LongText
+  clinician_summary_needs           String?                                @db.LongText
+  clinician_summary_recommendations String?                                @db.LongText
+}
+
+model lti2_consumer {
+  consumer_pk      Int               @id @default(autoincrement())
+  name             String            @db.VarChar(50)
+  consumer_key256  String            @unique(map: "lti2_consumer_consumer_key_UNIQUE") @db.VarChar(256)
+  consumer_key     String?           @db.Text
+  secret           String            @db.VarChar(1024)
+  lti_version      String?           @db.VarChar(10)
+  consumer_name    String?           @db.VarChar(255)
+  consumer_version String?           @db.VarChar(255)
+  consumer_guid    String?           @db.VarChar(1024)
+  profile          String?           @db.Text
+  tool_proxy       String?           @db.Text
+  settings         String?           @db.Text
+  protected        Boolean
+  enabled          Boolean
+  enable_from      DateTime?         @db.DateTime(0)
+  enable_until     DateTime?         @db.DateTime(0)
+  last_access      DateTime?         @db.Date
+  created          DateTime          @db.DateTime(0)
+  updated          DateTime          @db.DateTime(0)
+  lti2_context     lti2_context[]
+  lti2_nonce       lti2_nonce[]
+  lti2_tool_proxy  lti2_tool_proxy[]
+}
+
+model lti2_context {
+  context_pk         Int                  @id @default(autoincrement())
+  consumer_pk        Int
+  lti_context_id     String               @db.VarChar(255)
+  settings           String?              @db.Text
+  created            DateTime             @db.DateTime(0)
+  updated            DateTime             @db.DateTime(0)
+  lti2_consumer      lti2_consumer        @relation(fields: [consumer_pk], references: [consumer_pk], onUpdate: Restrict, map: "lti2_context_lti2_consumer_FK1")
+  lti2_resource_link lti2_resource_link[]
+
+  @@index([consumer_pk], map: "lti2_context_consumer_id_IDX")
+}
+
+model lti2_nonce {
+  consumer_pk   Int
+  value         String        @db.VarChar(32)
+  expires       DateTime      @db.DateTime(0)
+  lti2_consumer lti2_consumer @relation(fields: [consumer_pk], references: [consumer_pk], onUpdate: Restrict, map: "lti2_nonce_lti2_consumer_FK1")
+
+  @@id([consumer_pk, value])
+}
+
+model lti2_resource_link {
+  resource_link_pk         Int                  @id @default(autoincrement())
+  context_pk               Int?
+  consumer_pk              Int?
+  lti_resource_link_id     String               @db.VarChar(255)
+  settings                 String?              @db.Text
+  primary_resource_link_pk Int?
+  share_approved           Boolean?
+  created                  DateTime             @db.DateTime(0)
+  updated                  DateTime             @db.DateTime(0)
+  lti2_context             lti2_context?        @relation(fields: [context_pk], references: [context_pk], onDelete: Restrict, onUpdate: Restrict, map: "lti2_resource_link_lti2_context_FK1")
+  lti2_resource_link       lti2_resource_link?  @relation("lti2_resource_linkTolti2_resource_link_primary_resource_link_pk", fields: [primary_resource_link_pk], references: [resource_link_pk], onDelete: Restrict, onUpdate: Restrict, map: "lti2_resource_link_lti2_resource_link_FK1")
+  other_lti2_resource_link lti2_resource_link[] @relation("lti2_resource_linkTolti2_resource_link_primary_resource_link_pk")
+  lti2_share_key           lti2_share_key[]
+  lti2_user_result         lti2_user_result[]
+
+  @@index([consumer_pk], map: "lti2_resource_link_consumer_pk_IDX")
+  @@index([context_pk], map: "lti2_resource_link_context_pk_IDX")
+  @@index([primary_resource_link_pk], map: "lti2_resource_link_lti2_resource_link_FK1")
+}
+
+model lti2_share_key {
+  share_key_id       String             @id @db.VarChar(32)
+  resource_link_pk   Int
+  auto_approve       Boolean
+  expires            DateTime           @db.DateTime(0)
+  lti2_resource_link lti2_resource_link @relation(fields: [resource_link_pk], references: [resource_link_pk], onUpdate: Restrict, map: "lti2_share_key_lti2_resource_link_FK1")
+
+  @@index([resource_link_pk], map: "lti2_share_key_resource_link_pk_IDX")
+}
+
+model lti2_tool_proxy {
+  tool_proxy_pk Int           @id @default(autoincrement())
+  tool_proxy_id String        @unique(map: "lti2_tool_proxy_tool_proxy_id_UNIQUE") @db.VarChar(32)
+  consumer_pk   Int
+  tool_proxy    String        @db.Text
+  created       DateTime      @db.DateTime(0)
+  updated       DateTime      @db.DateTime(0)
+  lti2_consumer lti2_consumer @relation(fields: [consumer_pk], references: [consumer_pk], onUpdate: Restrict, map: "lti2_tool_proxy_lti2_consumer_FK1")
+
+  @@index([consumer_pk], map: "lti2_tool_proxy_consumer_id_IDX")
+}
+
+model lti2_user_result {
+  user_pk              Int                @id @default(autoincrement())
+  resource_link_pk     Int
+  lti_user_id          String             @db.VarChar(255)
+  lti_result_sourcedid String             @db.VarChar(1024)
+  created              DateTime           @db.DateTime(0)
+  updated              DateTime           @db.DateTime(0)
+  lti2_resource_link   lti2_resource_link @relation(fields: [resource_link_pk], references: [resource_link_pk], onUpdate: Restrict, map: "lti2_user_result_lti2_resource_link_FK1")
+
+  @@index([resource_link_pk], map: "lti2_user_result_resource_link_pk_IDX")
+}
+
+model magento_orders {
+  id                                    Int                                                 @id @default(autoincrement()) @db.UnsignedInt
+  magento_order_id                      Int?                                                @db.UnsignedInt
+  magento_customer_id                   Int?                                                @db.UnsignedInt
+  magento_product_sku                   String?                                             @db.VarChar(255)
+  magento_product_name                  String?                                             @db.VarChar(255)
+  magento_product_attr_plan_id          Int?                                                @db.UnsignedInt
+  magento_product_attr_plan_expire_days Int?                                                @db.UnsignedInt
+  magento_product_purchase_date         DateTime                                            @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  magento_product_attr_plan_activation  magento_orders_magento_product_attr_plan_activation @default(on_purchase)
+  magento_coupon_code                   String?                                             @db.VarChar(255)
+  mindprint_purchaser_customer_id       Int?                                                @db.UnsignedInt
+  mindprint_assigned_to_customer_id     Int?                                                @db.UnsignedInt
+  mindprint_product_assignment_date     DateTime                                            @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  mindprint_product_expiration_date     DateTime                                            @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  mindprint_status                      magento_orders_mindprint_status                     @default(purchased)
+  created_at                            DateTime                                            @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at                            DateTime                                            @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  magento_product_attr_display_mode     magento_orders_magento_product_attr_display_mode?   @default(default)
+  is_upgraded                           Boolean                                             @default(false)
+  is_api_order                          Boolean                                             @default(false)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model migrations {
+  migration String @db.VarChar(255)
+  batch     Int
+
+  @@ignore
+}
+
+model notification_jobs {
+  id                    Int      @id @default(autoincrement()) @db.UnsignedInt
+  notification_name     String   @db.Text
+  notification_datetime DateTime @db.DateTime(0)
+  notification_type     String   @db.Text
+  job_status            Int      @default(0)
+}
+
+model oa_accounts {
+  id                 Int                  @id @default(autoincrement()) @db.UnsignedInt
+  name               String               @db.VarChar(255)
+  created_at         DateTime             @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at         DateTime             @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  oa_map_account_org oa_map_account_org[]
+  oa_users           oa_users[]
+}
+
+model oa_aggregate_stats {
+  id                   Int     @id @default(autoincrement())
+  account_id           Int?
+  organization_id      Int?
+  family_id            Int?
+  org_name             String? @db.VarChar(255)
+  family_name          String? @db.VarChar(255)
+  active_student_count Int?
+  not_started          Int?
+  in_progress          Int?
+  completed            Int?
+  comprehensive_count  Int?
+  scores_count         Int?
+  extension_count      Int?
+}
+
+model oa_credits {
+  id                   Int      @id @default(autoincrement()) @db.UnsignedInt
+  account_id           Int      @db.UnsignedInt
+  organization_id      Int      @db.UnsignedInt
+  magento_order_id     Int?     @db.UnsignedInt
+  magento_product_sku  String   @db.VarChar(255)
+  magento_product_name String   @db.VarChar(255)
+  magento_product_id   Int      @db.UnsignedInt
+  created_at           DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at           DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  username             String   @db.VarChar(255)
+
+  @@index([account_id], map: "account_id")
+}
+
+model oa_map_account_org {
+  id              Int           @id @default(autoincrement()) @db.UnsignedInt
+  account_id      Int           @db.UnsignedInt
+  organization_id Int           @db.UnsignedInt
+  created_at      DateTime      @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at      DateTime      @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  oa_accounts     oa_accounts   @relation(fields: [account_id], references: [id], map: "oa_map_account_org_account_id_foreign")
+  organizations   organizations @relation(fields: [organization_id], references: [id], map: "oa_map_account_org_organization_id_foreign")
+
+  @@index([account_id], map: "oa_map_account_org_account_id_foreign")
+  @@index([organization_id], map: "oa_map_account_org_organization_id_foreign")
+}
+
+model oa_users {
+  id             Int         @id @default(autoincrement()) @db.UnsignedInt
+  account_id     Int         @db.UnsignedInt
+  username       String      @db.VarChar(255)
+  email          String?     @db.VarChar(255)
+  password       String      @db.LongText
+  first_name     String?     @db.VarChar(255)
+  last_name      String?     @db.VarChar(255)
+  remember_token String?     @db.VarChar(255)
+  active         Boolean     @default(true)
+  created_at     DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at     DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  oa_accounts    oa_accounts @relation(fields: [account_id], references: [id], map: "oa_users_account_id_foreign")
+
+  @@index([account_id], map: "oa_users_account_id_foreign")
+}
+
+model opened {
+  id                           Int     @id @default(autoincrement()) @db.UnsignedInt
+  mindprint_academic_skill_id  Int?
+  mindprint_cognitive_skill_id String? @db.VarChar(255)
+  mindprint_product_type_id    String? @db.VarChar(255)
+  opened_academic_topic        String? @db.VarChar(255)
+  common_core_opened_drop_down String? @db.VarChar(255)
+  common_core_standards        String? @db.VarChar(255)
+}
+
+model orders {
+  id               Int    @id @default(autoincrement()) @db.UnsignedInt
+  customer_id      Int    @default(0) @db.UnsignedInt
+  stripe_charge_id String @db.VarChar(255)
+}
+
+model org_customers {
+  id              Int @id @default(autoincrement()) @db.UnsignedInt
+  organization_id Int
+  customer_id     Int
+}
+
+model org_toolbox_categories {
+  id                  Int @id @default(autoincrement()) @db.UnsignedInt
+  organization_id     Int
+  toolbox_category_id Int
+  sort_order          Int
+}
+
+model organizations {
+  id                            Int                      @id @default(autoincrement()) @db.UnsignedInt
+  org_code                      String?                  @db.LongText
+  org_name                      String?                  @db.LongText
+  org_short_name                String?                  @db.LongText
+  child_show_free_products_only Boolean                  @default(false)
+  child_safe_mode_exclude_list  String?                  @db.VarChar(255)
+  subscription_plan             Boolean                  @default(false)
+  subscription_toolboxes_count  Int?
+  reading_plan_age_limit        Int?
+  override_tpl                  Boolean                  @default(false)
+  batch_profile_processing      Boolean                  @default(false)
+  test_taking_plan_age_limit    Int?
+  group_mode                    organizations_group_mode @default(section)
+  show_beta_features            Boolean                  @default(false)
+  excluded_dashboard_ids        String?                  @db.VarChar(255)
+  included_action_plan_ids      String?                  @default("2") @db.VarChar(255)
+  org_notes                     String?                  @db.LongText
+  lti_consumer_key              String                   @db.Text
+  show_renewals                 Boolean                  @default(false)
+  oa_map_account_org            oa_map_account_org[]
+}
+
+model payload_jobs {
+  id      Int    @id @default(autoincrement()) @db.UnsignedInt
+  job_id  String @db.VarChar(255)
+  ordinal Int    @db.UnsignedInt
+  data    String @db.LongText
+  status  String @db.VarChar(255)
+}
+
+model plan_extensions {
+  id                     Int      @id @default(autoincrement()) @db.UnsignedInt
+  plan_id                Int?     @db.UnsignedInt
+  default_extension_days Int?     @db.UnsignedInt
+  magento_product_id     Int?     @db.UnsignedInt
+  created_at             DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at             DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model plan_queue {
+  id           Int    @id @default(autoincrement()) @db.UnsignedInt
+  customer_id  Int
+  plan_type_id Int
+  section_ids  String @db.VarChar(255)
+  queue_status String @db.VarChar(255)
+}
+
+model plan_upgrades {
+  id                       Int      @id @default(autoincrement()) @db.UnsignedInt
+  from_plan_id             Int?     @db.UnsignedInt
+  to_plan_id               Int?     @db.UnsignedInt
+  magento_product_id       Int?     @db.UnsignedInt
+  created_at               DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at               DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  magento_from_product_sku String?  @db.VarChar(255)
+  status_transition        String?  @db.VarChar(255)
+  new_assignment           Boolean  @default(false)
+}
+
+model plans {
+  id                  Int        @id @default(autoincrement()) @db.UnsignedInt
+  name                String     @default("") @db.VarChar(100)
+  magento_name        String?    @db.Text
+  description         String     @default("") @db.VarChar(255)
+  magento_description String?    @db.Text
+  type                plans_type @default(adult)
+  duration            Int        @default(0)
+  requires_evaluation Int        @default(0) @db.TinyInt
+  default             Int?       @default(0) @db.TinyInt
+  price               Decimal    @default(0) @db.Decimal(10, 0)
+  price_discounted    Decimal    @default(0) @db.Decimal(10, 0)
+  created_at          DateTime?  @db.DateTime(0)
+  updated_at          DateTime?  @db.DateTime(0)
+}
+
+model portal_customers {
+  id                       Int     @id @default(autoincrement()) @db.UnsignedInt
+  customer_id              Int
+  username                 String  @db.VarChar(255)
+  password                 String  @db.VarChar(255)
+  skip_questionnaire       Boolean @default(false)
+  assessment_portal_status Boolean @default(false)
+}
+
+model priorities {
+  id                   Int    @id @default(autoincrement()) @db.UnsignedInt
+  priority_score       Float
+  priority_label       String @db.VarChar(255)
+  priority_description String @db.VarChar(255)
+}
+
+model priority_determinants {
+  id                 Int    @id @default(autoincrement()) @db.UnsignedInt
+  name               String @db.VarChar(255)
+  cognitive_skill_id Int
+  data_source        String @default("score") @db.VarChar(255)
+  data_formula       String @db.VarChar(255)
+}
+
+model product_features {
+  id         Int    @id @default(autoincrement()) @db.UnsignedInt
+  product_id Int    @db.UnsignedInt
+  feature    String @db.VarChar(255)
+  entry      Int    @db.UnsignedInt
+
+  @@unique([product_id, feature, entry], map: "product_id")
+}
+
+model product_priority_map {
+  id              Int    @id @default(autoincrement()) @db.UnsignedInt
+  product_id      Int
+  skill_id        Int
+  skill_component String @default("score") @db.VarChar(255)
+  priority_id     Int
+}
+
+model product_product_type {
+  id              Int             @id @default(autoincrement()) @db.UnsignedInt
+  product_id      Int?            @db.UnsignedInt
+  product_type_id Int?            @db.UnsignedInt
+  products        products?       @relation(fields: [product_id], references: [id], onDelete: Restrict, map: "product_product_type_product_id_foreign")
+  product_types2  product_types2? @relation(fields: [product_type_id], references: [id], onDelete: Restrict, map: "product_product_type_product_type_id_foreign")
+
+  @@unique([product_id, product_type_id], map: "product_product_type_product_id_product_type_id_unique")
+  @@index([product_type_id], map: "product_product_type_product_type_id_foreign")
+}
+
+model product_types {
+  id   Int    @id @default(autoincrement()) @db.UnsignedInt
+  name String @db.VarChar(255)
+}
+
+model product_types2 {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  name                 String                 @db.VarChar(255)
+  parent_id            Int                    @default(0) @db.UnsignedInt
+  old_type_id          Int                    @default(0) @db.UnsignedInt
+  image_url            String?                @db.VarChar(255)
+  name_alt             String?                @db.VarChar(255)
+  sort_order           Int?
+  product_product_type product_product_type[]
+}
+
+model products {
+  id                                            Int                                    @id @default(autoincrement()) @db.UnsignedInt
+  status                                        String                                 @default("To Be Reviewed") @db.VarChar(100)
+  high_priority                                 String                                 @default("") @db.VarChar(255)
+  user_id                                       Int                                    @default(0) @db.UnsignedInt
+  user_id_modified                              Int?                                   @db.UnsignedInt
+  review_feedback                               String?                                @db.MediumText
+  time_approved                                 Int?
+  paid                                          Int                                    @default(0) @db.UnsignedTinyInt
+  payment_note                                  String                                 @default("") @db.VarChar(255)
+  type                                          Int
+  name                                          String                                 @db.VarChar(255)
+  description                                   String?                                @db.MediumText
+  mindprint_age_range_start                     Int?                                   @db.UnsignedTinyInt
+  mindprint_age_range_end                       Int?                                   @db.UnsignedTinyInt
+  manufacturer_age_range_start                  Int?                                   @db.UnsignedTinyInt
+  manufacturer_age_range_end                    Int?                                   @db.UnsignedTinyInt
+  api_result                                    String?                                @db.MediumText
+  mindprint_review                              String?                                @db.MediumText
+  mindprint_review_2                            String?                                @db.MediumText
+  user_review                                   String?                                @db.MediumText
+  sysdevplat                                    String?                                @db.MediumText
+  specific_pros_1                               String?                                @db.MediumText
+  specific_pros_2                               String?                                @db.MediumText
+  specific_pros_3                               String?                                @db.MediumText
+  specific_cons_1                               String?                                @db.MediumText
+  specific_cons_2                               String?                                @db.MediumText
+  specific_cons_3                               String?                                @db.MediumText
+  specific_pros_1_2                             String?                                @db.MediumText
+  specific_pros_2_2                             String?                                @db.MediumText
+  specific_pros_3_2                             String?                                @db.MediumText
+  specific_cons_1_2                             String?                                @db.MediumText
+  specific_cons_2_2                             String?                                @db.MediumText
+  specific_cons_3_2                             String?                                @db.MediumText
+  mindprint_rating                              Decimal?                               @db.Decimal(2, 1)
+  user_rating                                   Decimal?                               @db.Decimal(2, 1)
+  manufacturer                                  String?                                @db.VarChar(255)
+  publisher                                     String?                                @db.VarChar(255)
+  company                                       String?                                @db.VarChar(255)
+  author                                        String?                                @db.VarChar(255)
+  version                                       String?                                @db.VarChar(255)
+  url                                           String?                                @db.VarChar(255)
+  url_image                                     String?                                @db.VarChar(255)
+  url_image_optimized                           String?                                @db.VarChar(255)
+  url_itunes                                    String?                                @db.VarChar(255)
+  url_amazon                                    String?                                @db.VarChar(255)
+  url_play                                      String?                                @db.VarChar(255)
+  retail_id_amazon                              String?                                @db.VarChar(255)
+  retail_id_itunes                              String?                                @db.VarChar(255)
+  retail_id_play                                String?                                @db.VarChar(255)
+  isbn                                          String?                                @db.VarChar(255)
+  copyright                                     String?                                @db.VarChar(255)
+  pricing                                       String?                                @db.VarChar(10)
+  price                                         Decimal?                               @db.Decimal(10, 2)
+  primary_theme_id                              Int?                                   @db.UnsignedInt
+  tags                                          String?                                @db.Text
+  created_at                                    DateTime?                              @db.DateTime(0)
+  updated_at                                    DateTime?                              @db.DateTime(0)
+  scanned_at                                    DateTime?                              @db.DateTime(0)
+  last_scan_status                              String?                                @db.VarChar(255)
+  icon_background_color                         String?                                @db.VarChar(255)
+  booster                                       Int                                    @default(0)
+  customer_must_have_these_cognitive_strengths  String?                                @db.VarChar(255)
+  customer_must_have_these_cognitive_weaknesses String?                                @db.VarChar(255)
+  cognitive_strengths_operator                  products_cognitive_strengths_operator  @default(one_or_more)
+  cognitive_weaknesses_operator                 products_cognitive_weaknesses_operator @default(one_or_more)
+  quote_slug                                    String?                                @db.Text
+  quote_author                                  String?                                @db.Text
+  ap_entities                                   ap_entities[]
+  product_product_type                          product_product_type[]
+}
+
+model products_by_skill {
+  id                     Int     @id @default(autoincrement()) @db.UnsignedInt
+  school_level           String  @default("") @db.VarChar(11)
+  academic_section       String  @default("") @db.VarChar(32)
+  verb_reas_acc          Int?
+  verb_reas_spd          Int?
+  verb_mem_acc           Int?
+  attention_acc          Int?
+  verb_reas_eff          Int?
+  spa_percep_acc         Int?
+  work_mem_acc           Int?
+  attention_spd          Int?
+  abs_reas_acc           Int?
+  abs_reas_eff           Int?
+  flex_think_acc         Int?
+  vis_motor_spd          Int?
+  vis_mem_eff            Int?
+  performance_prediction String  @default("") @db.VarChar(11)
+  product_1              Int
+  product_2              Int
+  product_3              Int
+  more_products          String? @db.VarChar(256)
+}
+
+model q_instances {
+  id               Int              @id @default(autoincrement()) @db.UnsignedInt
+  customer_id      Int              @db.UnsignedInt
+  questionnaire_id Int              @db.UnsignedInt
+  question_id      Int              @db.UnsignedInt
+  option_id        Int?             @db.UnsignedInt
+  option_key       String?          @db.Text
+  option_val       String?          @db.LongText
+  created_at       DateTime         @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at       DateTime         @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers        customers        @relation(fields: [customer_id], references: [id], map: "q_instances_customer_id_foreign")
+  q_options        q_options?       @relation(fields: [option_id], references: [id], onDelete: Restrict, map: "q_instances_option_id_foreign")
+  q_questions      q_questions      @relation(fields: [question_id], references: [id], map: "q_instances_question_id_foreign")
+  q_questionnaires q_questionnaires @relation(fields: [questionnaire_id], references: [id], map: "q_instances_questionnaire_id_foreign")
+
+  @@index([customer_id], map: "q_instances_customer_id_foreign")
+  @@index([option_id], map: "q_instances_option_id_foreign")
+  @@index([question_id], map: "q_instances_question_id_foreign")
+  @@index([questionnaire_id], map: "q_instances_questionnaire_id_foreign")
+}
+
+model q_map_customer_questionnaire {
+  id               Int               @id @default(autoincrement()) @db.UnsignedInt
+  customer_id      Int?              @db.UnsignedInt
+  questionnaire_id Int?              @db.UnsignedInt
+  created_at       DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at       DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers        customers?        @relation(fields: [customer_id], references: [id], onDelete: Restrict, map: "q_map_customer_questionnaire_customer_id_foreign")
+  q_questionnaires q_questionnaires? @relation(fields: [questionnaire_id], references: [id], onDelete: Restrict, map: "q_map_customer_questionnaire_questionnaire_id_foreign")
+
+  @@index([customer_id], map: "q_map_customer_questionnaire_customer_id_foreign")
+  @@index([questionnaire_id], map: "q_map_customer_questionnaire_questionnaire_id_foreign")
+}
+
+model q_map_option_cognitive_skill {
+  id                         Int                      @id @default(autoincrement()) @db.UnsignedInt
+  feature_cognitive_skill_id Int                      @db.UnsignedInt
+  q_option_id                Int                      @db.UnsignedInt
+  feature_cognitive_skills   feature_cognitive_skills @relation(fields: [feature_cognitive_skill_id], references: [id], map: "q_map_option_cognitive_skill_feature_cognitive_skill_id_foreign")
+  q_options                  q_options                @relation(fields: [q_option_id], references: [id], map: "q_map_option_cognitive_skill_q_option_id_foreign")
+
+  @@index([feature_cognitive_skill_id], map: "q_map_option_cognitive_skill_feature_cognitive_skill_id_foreign")
+  @@index([q_option_id], map: "q_map_option_cognitive_skill_q_option_id_foreign")
+}
+
+model q_map_option_question {
+  id                                                                 Int          @id @default(autoincrement()) @db.UnsignedInt
+  option_id                                                          Int          @db.UnsignedInt
+  question_id                                                        Int          @db.UnsignedInt
+  trigger_question_id                                                Int?         @db.UnsignedInt
+  show_in_lp                                                         Boolean      @default(false)
+  ordinal                                                            Int
+  q_options                                                          q_options    @relation(fields: [option_id], references: [id], map: "q_map_option_question_option_id_foreign")
+  q_questions_q_map_option_question_question_idToq_questions         q_questions  @relation("q_map_option_question_question_idToq_questions", fields: [question_id], references: [id], map: "q_map_option_question_question_id_foreign")
+  q_questions_q_map_option_question_trigger_question_idToq_questions q_questions? @relation("q_map_option_question_trigger_question_idToq_questions", fields: [trigger_question_id], references: [id], onDelete: Restrict, map: "q_map_option_question_trigger_question_id_foreign")
+
+  @@index([option_id], map: "q_map_option_question_option_id_foreign")
+  @@index([question_id], map: "q_map_option_question_question_id_foreign")
+  @@index([trigger_question_id], map: "q_map_option_question_trigger_question_id_foreign")
+}
+
+model q_map_question_questionnaire {
+  id                             Int                               @id @default(autoincrement()) @db.UnsignedInt
+  question_id                    Int                               @db.UnsignedInt
+  questionnaire_id               Int?                              @db.UnsignedInt
+  section_id                     Int?                              @db.UnsignedInt
+  type                           q_map_question_questionnaire_type
+  limit                          Int?
+  show_in_lp                     Boolean                           @default(false)
+  ordinal                        Int
+  show_as_self_reported_weakness Boolean                           @default(false)
+  q_questions                    q_questions                       @relation(fields: [question_id], references: [id], map: "q_map_question_questionnaire_question_id_foreign")
+  q_questionnaires               q_questionnaires?                 @relation(fields: [questionnaire_id], references: [id], onDelete: Restrict, map: "q_map_question_questionnaire_questionnaire_id_foreign")
+  q_sections                     q_sections?                       @relation(fields: [section_id], references: [id], onDelete: Restrict, map: "q_map_question_questionnaire_section_id_foreign")
+
+  @@index([question_id], map: "q_map_question_questionnaire_question_id_foreign")
+  @@index([questionnaire_id], map: "q_map_question_questionnaire_questionnaire_id_foreign")
+  @@index([section_id], map: "q_map_question_questionnaire_section_id_foreign")
+}
+
+model q_map_questionnaire_section {
+  id               Int              @id @default(autoincrement()) @db.UnsignedInt
+  questionnaire_id Int              @db.UnsignedInt
+  section_id       Int              @db.UnsignedInt
+  ordinal          Int
+  q_questionnaires q_questionnaires @relation(fields: [questionnaire_id], references: [id], map: "q_map_questionnaire_section_questionnaire_id_foreign")
+  q_sections       q_sections       @relation(fields: [section_id], references: [id], map: "q_map_questionnaire_section_section_id_foreign")
+
+  @@index([questionnaire_id], map: "q_map_questionnaire_section_questionnaire_id_foreign")
+  @@index([section_id], map: "q_map_questionnaire_section_section_id_foreign")
+}
+
+model q_options {
+  id                           Int                            @id @default(autoincrement()) @db.UnsignedInt
+  label                        String                         @db.Text
+  key                          String?                        @db.Text
+  created_at                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  q_instances                  q_instances[]
+  q_map_option_cognitive_skill q_map_option_cognitive_skill[]
+  q_map_option_question        q_map_option_question[]
+}
+
+model q_questionnaires {
+  id                           Int                            @id @default(autoincrement()) @db.UnsignedInt
+  name                         String                         @db.Text
+  subtitle                     String                         @db.Text
+  created_at                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  override                     Boolean                        @default(false)
+  q_instances                  q_instances[]
+  q_map_customer_questionnaire q_map_customer_questionnaire[]
+  q_map_question_questionnaire q_map_question_questionnaire[]
+  q_map_questionnaire_section  q_map_questionnaire_section[]
+  q_shared                     q_shared[]
+}
+
+model q_questions {
+  id                                                                           Int                            @id @default(autoincrement()) @db.UnsignedInt
+  label                                                                        String                         @db.Text
+  subtext                                                                      String?                        @db.Text
+  created_at                                                                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at                                                                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  q_instances                                                                  q_instances[]
+  q_map_option_question_q_map_option_question_question_idToq_questions         q_map_option_question[]        @relation("q_map_option_question_question_idToq_questions")
+  q_map_option_question_q_map_option_question_trigger_question_idToq_questions q_map_option_question[]        @relation("q_map_option_question_trigger_question_idToq_questions")
+  q_map_question_questionnaire                                                 q_map_question_questionnaire[]
+}
+
+model q_sections {
+  id                           Int                            @id @default(autoincrement()) @db.UnsignedInt
+  label                        String                         @db.Text
+  subtext                      String?                        @db.Text
+  created_at                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at                   DateTime                       @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  q_map_question_questionnaire q_map_question_questionnaire[]
+  q_map_questionnaire_section  q_map_questionnaire_section[]
+}
+
+model q_shared {
+  id               Int              @id @default(autoincrement()) @db.UnsignedInt
+  name             String?          @db.Text
+  email            String           @db.Text
+  customer_id      Int              @db.UnsignedInt
+  questionnaire_id Int              @db.UnsignedInt
+  token            String           @db.Text
+  viewed_at        DateTime?        @db.Timestamp(0)
+  created_at       DateTime         @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at       DateTime         @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers        customers        @relation(fields: [customer_id], references: [id], map: "q_shared_customer_id_foreign")
+  q_questionnaires q_questionnaires @relation(fields: [questionnaire_id], references: [id], map: "q_shared_questionnaire_id_foreign")
+
+  @@index([customer_id], map: "q_shared_customer_id_foreign")
+  @@index([questionnaire_id], map: "q_shared_questionnaire_id_foreign")
+}
+
+model r_instances {
+  id               Int               @id @default(autoincrement()) @db.UnsignedInt
+  type             r_instances_type?
+  customer_id      Int?
+  organization_id  Int?
+  generic_group_id Int?
+  note             String?           @db.LongText
+  created_at       DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at       DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model regen_queue {
+  id              Int      @id @default(autoincrement()) @db.UnsignedInt
+  family_id       Int?
+  organization_id Int?
+  job_status      Int      @default(0)
+  created_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model reviews {
+  id                Int       @id @default(autoincrement()) @db.UnsignedInt
+  product_id        Int
+  customer_id       Int?
+  fake_display_name String?   @db.VarChar(100)
+  fake_tagline      String?   @db.VarChar(100)
+  rating            Decimal?  @db.Decimal(2, 1)
+  review            String?   @db.MediumText
+  reported          Boolean?  @default(false)
+  created_at        DateTime? @db.DateTime(0)
+  updated_at        DateTime? @db.DateTime(0)
+}
+
+model role_user {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  user_id    Int      @db.UnsignedInt
+  role_id    Int      @db.UnsignedInt
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  roles      roles    @relation(fields: [role_id], references: [id], onDelete: Cascade, map: "role_user_role_id_foreign")
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, map: "role_user_user_id_foreign")
+
+  @@index([role_id], map: "role_user_role_id_foreign")
+  @@index([user_id], map: "role_user_user_id_foreign")
+}
+
+model roles {
+  id         Int         @id @default(autoincrement()) @db.UnsignedInt
+  name       String      @unique(map: "roles_name_unique") @db.VarChar(255)
+  created_at DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime    @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  role_user  role_user[]
+}
+
+model rules_engine_data {
+  id              Int      @id @default(autoincrement()) @db.UnsignedInt
+  datasetid       String   @db.VarChar(255)
+  mongo           String   @db.Text
+  rule            String   @db.Text
+  strengths       String   @db.Text
+  needs           String   @db.Text
+  recommendations String?  @db.Text
+  created_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  rule_match      String?  @db.VarChar(255)
+  products        String?  @db.VarChar(255)
+  overall         String?  @db.LongText
+  reading         String?  @db.LongText
+  english         String?  @db.LongText
+  math            String?  @db.LongText
+  science         String?  @db.LongText
+  values          String?  @db.LongText
+}
+
+model rules_engine_matches {
+  id              Int       @id @default(autoincrement()) @db.UnsignedInt
+  rules_datasetid String    @db.VarChar(255)
+  cnb_datasetid   String    @db.VarChar(255)
+  customer_id     Int?      @db.UnsignedInt
+  created_at      DateTime? @db.Timestamp(0)
+}
+
+model rules_engine_matches_content {
+  id              Int     @id @default(autoincrement()) @db.UnsignedInt
+  strengths       String  @db.Text
+  needs           String  @db.Text
+  recommendations String? @db.Text
+  next_steps      String  @db.Text
+  cnb_datasetid   String  @db.VarChar(255)
+  customer_id     Int?    @db.UnsignedInt
+  overall         String? @db.LongText
+  reading         String? @db.LongText
+  english         String? @db.LongText
+  math            String? @db.LongText
+  science         String? @db.LongText
+  values          String? @db.LongText
+}
+
+model rules_engine_rules {
+  id        Int    @id @default(autoincrement()) @db.UnsignedInt
+  datasetid String @db.VarChar(255)
+  field     String @db.VarChar(255)
+  label     String @db.VarChar(255)
+  operator  String @db.VarChar(255)
+  val       String @db.VarChar(255)
+}
+
+model shared_learning_profiles {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  customer_id Int?
+  name        String?   @db.VarChar(255)
+  email       String?   @db.VarChar(255)
+  token       String?   @db.VarChar(255)
+  viewed_at   DateTime? @db.DateTime(0)
+  created_at  DateTime? @db.DateTime(0)
+  updated_at  DateTime? @db.DateTime(0)
+  type        String?   @db.VarChar(255)
+}
+
+model static_assets_with_token {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  token       String    @db.VarChar(255)
+  blob        Bytes     @db.Blob
+  type        String    @db.VarChar(255)
+  url         String    @db.VarChar(255)
+  views       Int       @default(0)
+  created_at  DateTime  @db.DateTime(0)
+  last_viewed DateTime? @db.DateTime(0)
+}
+
+model t_registrants {
+  id              Int      @id @default(autoincrement()) @db.UnsignedInt
+  email           String   @db.VarChar(255)
+  passcode        String   @db.VarChar(255)
+  logins          Int      @default(0)
+  organization_id Int?     @db.UnsignedInt
+  remember_token  String?  @db.VarChar(255)
+  active          Boolean  @default(true)
+  note            String?  @db.LongText
+  created_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at      DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model t_registrants_learning_profiles {
+  t_registrant_id                Int?      @db.UnsignedInt
+  learning_profile_id            Int?      @db.UnsignedInt
+  learning_profile_sent_to_email String?   @db.VarChar(255)
+  learning_profile_date_sent     DateTime? @db.DateTime(0)
+  token                          String?   @db.VarChar(255)
+  updated_at                     DateTime? @db.DateTime(0)
+  created_at                     DateTime? @db.DateTime(0)
+
+  @@ignore
+}
+
+model temp {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  label      String   @db.Text
+  key        String?  @db.Text
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model test_sessions {
+  id                    Int     @id @default(autoincrement()) @db.UnsignedInt
+  test_session_id       Int?
+  test_session_date     String? @db.Text
+  test_name             String  @db.Text
+  test_results          String  @db.LongText
+  mindprint_customer_id Int?
+  family_id             Int?
+  student_name          String  @db.Text
+}
+
+model testimonials {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  name       String   @db.VarChar(255)
+  body       String   @db.Text
+  status     String   @default("submitted") @db.VarChar(255)
+  school_id  Int      @db.UnsignedInt
+  course_id  Int      @db.UnsignedInt
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+
+  @@index([course_id], map: "testimonials_course_id_foreign")
+  @@index([school_id], map: "testimonials_school_id_foreign")
+}
+
+model tmp_12025 {
+  last_name   String? @db.VarChar(255)
+  first_name  String? @db.VarChar(255)
+  gender      String? @db.VarChar(1)
+  birthdate   String? @db.VarChar(32)
+  customer_id String? @db.VarChar(7)
+  id          Int     @id @default(autoincrement())
+}
+
+model toolbox_categories {
+  id            Int     @id @default(autoincrement()) @db.UnsignedInt
+  title         String? @db.VarChar(255)
+  description   String? @db.VarChar(255)
+  headline_html String? @db.VarChar(255)
+  page_type     String  @default("keyword_search") @db.VarChar(255)
+  list_type     String  @default("multi") @db.VarChar(255)
+}
+
+model toolbox_category_picklist_map {
+  id                  Int @id @default(autoincrement()) @db.UnsignedInt
+  toolbox_category_id Int @db.UnsignedInt
+  toolbox_picklist_id Int @db.UnsignedInt
+  sort_order          Int @db.UnsignedInt
+  org_id              Int @default(1) @db.UnsignedInt
+}
+
+model toolbox_picklists {
+  id            Int     @id @default(autoincrement()) @db.UnsignedInt
+  title         String? @db.VarChar(255)
+  description   String? @db.VarChar(255)
+  search_terms  String? @db.VarChar(255)
+  product_types String? @db.VarChar(255)
+}
+
+model top_products_feb20_2019 {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  learning_profile_id Int      @db.UnsignedInt
+  dimension_id        Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  final_score         String   @db.VarChar(255)
+  final_range         String   @db.VarChar(255)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  top_products        String?  @db.VarChar(255)
+}
+
+model top_products_final {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  learning_profile_id Int      @db.UnsignedInt
+  dimension_id        Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  final_score         String   @db.VarChar(255)
+  final_range         String   @db.VarChar(255)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  top_products        String?  @db.VarChar(255)
+  is_processed        Int      @default(0)
+}
+
+model top_products_mar_6_2019 {
+  id                  Int      @id @default(autoincrement()) @db.UnsignedInt
+  family_id           Int      @db.UnsignedInt
+  customer_id         Int      @db.UnsignedInt
+  learning_profile_id Int      @db.UnsignedInt
+  dimension_id        Int      @db.UnsignedInt
+  first_name          String   @db.VarChar(255)
+  last_name           String   @db.VarChar(255)
+  final_score         String   @db.VarChar(255)
+  final_range         String   @db.VarChar(255)
+  data                String   @db.LongText
+  created_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  top_products        String?  @db.VarChar(255)
+  is_processed        Int      @default(0)
+}
+
+model tp_reports {
+  id                  Int               @id @default(autoincrement()) @db.UnsignedInt
+  customer_id         Int               @db.UnsignedInt
+  learning_profile_id Int               @db.UnsignedInt
+  type_id             Int               @db.UnsignedInt
+  data_for_render     String            @db.LongText
+  created_at          DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at          DateTime          @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  customers           customers         @relation(fields: [customer_id], references: [id], onUpdate: Restrict, map: "tp_reports_customer_id_foreign")
+  learning_profiles   learning_profiles @relation(fields: [learning_profile_id], references: [id], onUpdate: Restrict, map: "tp_reports_learning_profile_id_foreign")
+  tp_types            tp_types          @relation(fields: [type_id], references: [id], onUpdate: Restrict, map: "tp_reports_type_id_foreign")
+
+  @@index([customer_id], map: "tp_reports_customer_id_foreign")
+  @@index([learning_profile_id], map: "tp_reports_learning_profile_id_foreign")
+  @@index([type_id], map: "tp_reports_type_id_foreign")
+}
+
+model tp_sat_act_conversions {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  act        Float    @db.Float
+  sat        Float    @db.Float
+  sat_math   Float?   @db.Float
+  single     Boolean  @default(false)
+  created_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at DateTime @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+}
+
+model tp_types {
+  id           Int          @id @default(autoincrement()) @db.UnsignedInt
+  label        String       @db.Text
+  product_name String       @db.Text
+  created_at   DateTime     @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  updated_at   DateTime     @default(dbgenerated("0000-00-00 00:00:00")) @db.Timestamp(0)
+  tp_reports   tp_reports[]
+}
+
+model type_entries {
+  feature String @db.VarChar(255)
+  entry   Int    @db.UnsignedInt
+  type    Int    @db.UnsignedInt
+
+  @@unique([feature, entry, type], map: "feature")
+}
+
+model users {
+  id             Int         @id @default(autoincrement()) @db.UnsignedInt
+  active         Int         @default(1) @db.TinyInt
+  level          Int         @default(1) @db.UnsignedTinyInt
+  password       String      @db.VarChar(100)
+  email          String      @db.VarChar(100)
+  name           String      @db.VarChar(100)
+  tagline        String      @default("") @db.VarChar(100)
+  remember_token String?     @db.VarChar(255)
+  created_at     DateTime?   @db.DateTime(0)
+  updated_at     DateTime?   @db.DateTime(0)
+  role_user      role_user[]
+}
+
+model v2_boost {
+  id             Int                @id @default(autoincrement()) @db.UnsignedInt
+  type           v2_boost_type
+  subject        v2_boost_subject?
+  category       v2_boost_category?
+  title          String?            @db.VarChar(256)
+  subtitle       String?            @db.VarChar(256)
+  cognitive_eval String?            @db.VarChar(256)
+  media          String?            @db.VarChar(256)
+  video          String?            @db.VarChar(256)
+  content        String?            @db.Text
+  created_at     DateTime?          @db.Timestamp(0)
+  updated_at     DateTime?          @db.Timestamp(0)
+  deleted_at     DateTime?          @db.Timestamp(0)
+}
+
+model v2_code {
+  id          Int          @id @default(autoincrement()) @db.UnsignedInt
+  code        String?      @db.VarChar(11)
+  ref_id      Int?
+  type        v2_code_type
+  crreated_at DateTime?    @db.Timestamp(0)
+  updated_at  DateTime?    @db.Timestamp(0)
+  deleted_at  DateTime?    @db.Timestamp(0)
+}
+
+model v2_integrations {
+  id           Int                   @id @default(autoincrement()) @db.UnsignedInt
+  auth_id      String?               @db.VarChar(255)
+  reference_id Int?
+  external_id  String?               @db.VarChar(255)
+  type         v2_integrations_type?
+  created_at   DateTime?             @db.Timestamp(0)
+  updated_at   DateTime?             @db.Timestamp(0)
+  deleted_at   DateTime?             @db.Timestamp(0)
+}
+
+model v2_trial_accounts {
+  id           Int       @id @default(autoincrement()) @db.UnsignedInt
+  trial_id     Int
+  email        String?   @db.VarChar(100)
+  token        String?   @db.VarChar(255)
+  subid        String?   @db.VarChar(100)
+  test_type    String?   @db.VarChar(100)
+  created_at   DateTime? @db.Timestamp(0)
+  updated_at   DateTime? @db.Timestamp(0)
+  completed_at DateTime? @db.Timestamp(0)
+}
+
+model v2_trials {
+  id              Int       @id @default(autoincrement()) @db.UnsignedInt
+  passcode        String    @default("") @db.VarChar(255)
+  active          Boolean   @default(true)
+  logins          Int       @default(0)
+  organization_id Int?
+  created_at      DateTime? @db.Timestamp(0)
+  updated_at      DateTime? @db.Timestamp(0)
+}
+
+enum ap_entities_type {
+  product
+  href
+  other
+}
+
+enum customer_product_type {
+  product
+  resource
+}
+
+enum customers_type {
+  child
+  adult
+}
+
+enum customers_gender {
+  male
+  female
+}
+
+enum customers_backup_type {
+  child
+  adult
+}
+
+enum customers_backup_gender {
+  male
+  female
+}
+
+enum learning_profiles_status {
+  test_started
+  test_finished
+  review_started
+  review_finished
+  review_sent
+  batch_processing_hold
+}
+
+enum learning_profiles_display_mode {
+  default
+  mindprint_scores        @map("mindprint-scores")
+  mindprint_assist        @map("mindprint-assist")
+  mindprint_att_screener  @map("mindprint-att-screener")
+  mindprint_etswm         @map("mindprint-etswm")
+  mindprint_etsvrwmvmspa  @map("mindprint-etsvrwmvmspa")
+}
+
+enum learning_profiles_backup_status {
+  test_started
+  test_finished
+  review_started
+  review_finished
+  review_sent
+  batch_processing_hold
+}
+
+enum learning_profiles_backup_display_mode {
+  default
+  mindprint_scores        @map("mindprint-scores")
+  mindprint_assist        @map("mindprint-assist")
+  mindprint_att_screener  @map("mindprint-att-screener")
+}
+
+enum magento_orders_magento_product_attr_plan_activation {
+  on_purchase    @map("on-purchase")
+  on_assignment  @map("on-assignment")
+}
+
+enum magento_orders_mindprint_status {
+  purchased
+  assigned
+}
+
+enum magento_orders_magento_product_attr_display_mode {
+  default
+  mindprint_scores        @map("mindprint-scores")
+  mindprint_assist        @map("mindprint-assist")
+  mindprint_att_screener  @map("mindprint-att-screener")
+  mindprint_etswm         @map("mindprint-etswm")
+  mindprint_etsvrwmvmspa  @map("mindprint-etsvrwmvmspa")
+}
+
+enum organizations_group_mode {
+  school
+  section
+}
+
+enum plans_type {
+  child
+  adult
+}
+
+enum products_cognitive_strengths_operator {
+  one_or_more
+  all
+}
+
+enum products_cognitive_weaknesses_operator {
+  one_or_more
+  all
+}
+
+enum q_map_question_questionnaire_type {
+  select
+  radio
+  text
+  textarea
+  checkbox
+}
+
+enum r_instances_type {
+  student
+  class
+}
+
+enum v2_boost_type {
+  checklist
+  strategy
+}
+
+enum v2_boost_subject {
+  math
+  sel
+  reading
+  writing
+}
+
+enum v2_boost_category {
+  habit
+  help
+}
+
+enum v2_code_type {
+  boost
+  lift
+}
+
+enum v2_integrations_type {
+  testprep
+}
