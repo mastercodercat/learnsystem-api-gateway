@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   prisma.$use(async (params, next) => {
     if (params.model === Prisma.ModelName.users) {
-      if (params.action == "create") {
+      if (params.action === "create" || params.action === "update") {
         params.args.data.password = await await hashPassword(
           params.args.data.password
         );

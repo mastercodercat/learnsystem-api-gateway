@@ -43,7 +43,6 @@ export const signIn = async (req: express.Request, res: express.Response) => {
 
 export const signUp = async (req: express.Request, res: express.Response) => {
   const { name, email, password } = req.body;
-  console.log(req.body);
 
   if (!name || !email || !password) {
     return res
@@ -74,4 +73,28 @@ export const signUp = async (req: express.Request, res: express.Response) => {
 
 export const verify = (req: express.Request, res: express.Response) => {
   return res.json({ user: req.user });
+};
+
+export const resetPassword = async (
+  req: express.Request,
+  res: express.Response
+) => {
+  const { email } = req.body;
+
+  const user = await db.users.findFirst({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    return res.status(401).json({ error: "Incorrect Credentials " });
+  }
+
+  await db.users.update({
+    where: { id: user.id },
+    data: { password: "password" },
+  });
+
+  return res.status(200).json({ message: "Successfully updated password." });
 };
