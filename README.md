@@ -16,13 +16,15 @@ Source of truth route list and forwarding to microservices. This is for auth gat
 
 - Then, run `npm install`
 
-- Then, run `npm run dev`
+- Then, run `npm run dev` or `npm start`
 
 ## API endpoints
 
 - `POST /api/auth/signin`: to sign in with email and password
 
 - `POST /api/auth/signup`: to sign up with name, email and password
+
+- `POST /api/auth/reset-password`: to reset password via email
 
 - `GET /api/auth/verify`: to verify user with jwt token
 
@@ -35,3 +37,7 @@ Source of truth route list and forwarding to microservices. This is for auth gat
 ## Authenticate/Authorize
 
 - `passport`
+
+## Validation
+
+- `express-validator` for request validation
