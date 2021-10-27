@@ -14,10 +14,15 @@ const app = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
+
 app.use(cors());
 app.use(passport.initialize());
 
 app.use(morgan);
+
+app.get("/ping", (req, res) => {
+  res.status(200).json({ result: "pong" });
+});
 
 app.use("/api", routes);
 
