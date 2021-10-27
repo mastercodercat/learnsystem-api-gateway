@@ -10,6 +10,12 @@ Source of truth route list and forwarding to microservices. This is for auth gat
 
 - TypeScript
 
+## Import CSV data to database
+
+run `npx prisma db seed` to import csv data to development database
+
+CSV files are in `prisma` folder inside the repository.
+
 ## How to start
 
 - First, copy `.env.example` file and rename it to `.env`
