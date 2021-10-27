@@ -9,7 +9,4 @@ phases:
 artifacts:
   type: zip
   files:
-    - package.json
-    - package-lock.json
-    - "dist/**/*"
-    - README.md
+    - "**/*"
