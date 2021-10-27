@@ -7,6 +7,5 @@ phases:
     commands:
       - "npm run build-ts"
 artifacts:
-  type: zip
   files:
     - "**/*"

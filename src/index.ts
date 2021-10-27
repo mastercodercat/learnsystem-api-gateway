@@ -15,6 +15,12 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.json());
 
+// const corsOptions = {
+//   origin: [process.env.ALLOWED_LOGIN_DOMAIN],
+//   credentials: true, //access-control-allow-credentials:true
+//   optionSuccessStatus: 200,
+// };
+// app.use(cors(corsOptions));
 app.use(cors());
 app.use(passport.initialize());
 
