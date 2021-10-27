@@ -8,4 +8,8 @@ phases:
       - "npm run build-ts"
 artifacts:
   files:
-    - "**/*"
+    - index.js
+    - dist/**/*
+    - request-map.js
+    - credentials.json
+    - node_modules/**/*
