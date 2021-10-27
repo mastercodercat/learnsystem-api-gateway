@@ -8,6 +8,10 @@ export const hashPassword = async (plainPassword: string) => {
   return hash;
 };
 
+export const hashPasswordSync = (password: string) => {
+  return bcrypt.hashSync(password, saltRounds);
+};
+
 export const comparePasswords = async (
   plainPassword: string,
   hashedPassword: string

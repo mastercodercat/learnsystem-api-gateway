@@ -1954,6 +1954,21 @@ model v2_trials {
   updated_at      DateTime? @db.Timestamp(0)
 }
 
+model v2_users {
+  id                Int     @id @default(autoincrement()) @db.UnsignedInt
+  customer_id       Int?
+  email             String? @db.VarChar(256)
+  username          String? @db.VarChar(256)
+  password          String? @db.VarChar(256)
+  first_name        String? @db.VarChar(256)
+  last_name         String? @db.VarChar(256)
+  role_level        Int?
+  school_student_id String? @db.VarChar(256)
+  birthdate         String? @db.VarChar(256)
+  gender            String? @db.VarChar(256)
+  group             String? @db.VarChar(256)
+}
+
 enum ap_entities_type {
   product
   href
@@ -1996,11 +2011,11 @@ enum learning_profiles_status {
 
 enum learning_profiles_display_mode {
   default
-  mindprint_scores        @map("mindprint-scores")
-  mindprint_assist        @map("mindprint-assist")
-  mindprint_att_screener  @map("mindprint-att-screener")
-  mindprint_etswm         @map("mindprint-etswm")
-  mindprint_etsvrwmvmspa  @map("mindprint-etsvrwmvmspa")
+  mindprint_scores @map("mindprint-scores")
+  mindprint_assist @map("mindprint-assist")
+  mindprint_att_screener @map("mindprint-att-screener")
+  mindprint_etswm @map("mindprint-etswm")
+  mindprint_etsvrwmvmspa @map("mindprint-etsvrwmvmspa")
 }
 
 enum learning_profiles_backup_status {
@@ -2014,14 +2029,14 @@ enum learning_profiles_backup_status {
 
 enum learning_profiles_backup_display_mode {
   default
-  mindprint_scores        @map("mindprint-scores")
-  mindprint_assist        @map("mindprint-assist")
-  mindprint_att_screener  @map("mindprint-att-screener")
+  mindprint_scores @map("mindprint-scores")
+  mindprint_assist @map("mindprint-assist")
+  mindprint_att_screener @map("mindprint-att-screener")
 }
 
 enum magento_orders_magento_product_attr_plan_activation {
-  on_purchase    @map("on-purchase")
-  on_assignment  @map("on-assignment")
+  on_purchase @map("on-purchase")
+  on_assignment @map("on-assignment")
 }
 
 enum magento_orders_mindprint_status {
@@ -2031,11 +2046,11 @@ enum magento_orders_mindprint_status {
 
 enum magento_orders_magento_product_attr_display_mode {
   default
-  mindprint_scores        @map("mindprint-scores")
-  mindprint_assist        @map("mindprint-assist")
-  mindprint_att_screener  @map("mindprint-att-screener")
-  mindprint_etswm         @map("mindprint-etswm")
-  mindprint_etsvrwmvmspa  @map("mindprint-etsvrwmvmspa")
+  mindprint_scores @map("mindprint-scores")
+  mindprint_assist @map("mindprint-assist")
+  mindprint_att_screener @map("mindprint-att-screener")
+  mindprint_etswm @map("mindprint-etswm")
+  mindprint_etsvrwmvmspa @map("mindprint-etsvrwmvmspa")
 }
 
 enum organizations_group_mode {
