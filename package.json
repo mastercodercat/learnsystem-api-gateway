@@ -47,6 +47,6 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "engines": {
-    "node": ">=13"
+    "node": "14.17.6"
   }
 }
