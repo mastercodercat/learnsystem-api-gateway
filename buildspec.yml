@@ -6,10 +6,11 @@ phases:
   build:
     commands:
       - "npm run build-ts"
+      - echo "building typescript"
+  post_build:
+    commands:
+      - echo $CODEBUILD_SRC_DIR
 artifacts:
   files:
-    - index.js
-    - dist/**/*
-    - request-map.js
-    - credentials.json
-    - node_modules/**/*
+      - '**/*'
+    base-directory: 'dist'
