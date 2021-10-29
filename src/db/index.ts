@@ -1,19 +1,15 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-import { hashPassword } from "../utils/password";
+
+import {
+  hashPasswordMiddleware,
+  softDeleteMiddleware,
+} from "../middlewares/prisma";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  prisma.$use(async (params, next) => {
-    if (params.model === Prisma.ModelName.users) {
-      if (params.action === "create" || params.action === "update") {
-        params.args.data.password = await await hashPassword(
-          params.args.data.password
-        );
-      }
-    }
-    return next(params);
-  });
+  prisma.$use(hashPasswordMiddleware);
+  prisma.$use(softDeleteMiddleware);
 }
 
 main();
