@@ -46,9 +46,8 @@ export const importFromCSVToUsers = async (fileName: string) => {
     data: usersData.map((user) => {
       return {
         ...omit(user, ["student_id"]),
-        role_level: 4,
+        role_level: 1,
         school_student_id: user.student_id,
-        password: hashPasswordSync(user.password),
       };
     }),
   });

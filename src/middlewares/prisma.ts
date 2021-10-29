@@ -1,12 +1,15 @@
 import { Prisma } from "@prisma/client";
-import { hashPassword } from "../utils/password";
+import { hashPasswordSync } from "../utils/password";
 
 export const hashPasswordMiddleware = async (params, next) => {
   if (params.model === Prisma.ModelName.v2_users) {
-    if (params.action === "create" || params.action === "createMany") {
-      params.args.data.password = await await hashPassword(
-        params.args.data.password
-      );
+    if (params.action === "create") {
+      params.args.data.password = hashPasswordSync(params.args.data.password);
+    } else if (params.action === "createMany") {
+      params.args.data = params.args.data.map((user) => ({
+        ...user,
+        password: hashPasswordSync(user.password),
+      }));
     }
   }
   return next(params);
