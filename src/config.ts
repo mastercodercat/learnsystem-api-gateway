@@ -6,7 +6,7 @@ export default {
   // application configurations
   appName: process.env.APP_NAME || "MindPrint API Gateway",
   appPort: process.env.APP_PORT || 3000,
-  appSecret: process.env.APP_SECRET || "",
+  appSecret: process.env.APP_SECRET || "mindprintlearning",
 
   // database configurations
   databaseHost:

@@ -26,6 +26,10 @@ app.use(passport.initialize());
 
 app.use(morgan);
 
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Successfully connected to api gateway." });
+});
+
 app.get("/ping", (req, res) => {
   res.status(200).json({ result: "pong" });
 });
