@@ -37,12 +37,12 @@ export const softDeleteMiddleware = async (params, next) => {
         break;
 
       case "findUnique":
-        params.args.action = "findFirst";
+        params.action = "findFirst";
         params.args.where["deleted_at"] = null;
         break;
 
       case "findMany":
-        if (!params.args.where) {
+        if (params.args.where) {
           if (!params.args.where.deleted_at) {
             params.args.where["deleted_at"] = null;
           }

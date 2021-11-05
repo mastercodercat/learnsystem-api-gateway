@@ -12,7 +12,7 @@ const jwtOptions = {
 };
 
 const jwtLogin = new JwtStrategy(jwtOptions, async (payload, done) => {
-  const user = await db.users.findUnique({
+  const user = await db.v2_users.findUnique({
     where: {
       id: payload.sub,
     },
