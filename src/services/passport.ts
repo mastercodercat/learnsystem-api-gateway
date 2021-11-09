@@ -1,14 +1,13 @@
 import passport from "passport";
-import { Strategy as JwtStrategy } from "passport-jwt";
-import { ExtractJwt } from "passport-jwt";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 
 import db from "../db";
-import config from "../config";
+import { getPublicKey } from "../utils/token";
 
-// setting the jwt strategy
 const jwtOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: config.appSecret,
+  secretOrKey: getPublicKey(),
+  algorithms: ["RS256"],
 };
 
 const jwtLogin = new JwtStrategy(jwtOptions, async (payload, done) => {

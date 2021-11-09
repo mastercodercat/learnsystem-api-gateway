@@ -20,6 +20,8 @@ CSV files are in `prisma` folder inside the repository.
 
 - First, copy `.env.example` file and rename it to `.env`
 
+- Make your own certificate files(`id_rsa_priv.pem`, `id_rsa_pub.pem`) inside the `certificates` directory
+
 - Then, run `npm install`
 
 - Then, run `npm run dev` or `npm start`

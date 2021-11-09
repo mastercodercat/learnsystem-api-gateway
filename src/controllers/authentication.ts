@@ -1,15 +1,9 @@
 import express from "express";
-import jwt from "jsonwebtoken";
-import { v2_users } from "@prisma/client";
 
 import db from "../db";
-import config from "../config";
-import { comparePasswords } from "../utils/password";
 
-const tokenForUser = (user: v2_users) => {
-  const timestamp = new Date().getTime();
-  return jwt.sign({ sub: user.id, iat: timestamp }, config.appSecret);
-};
+import { comparePasswords } from "../utils/password";
+import { generateToken } from "../utils/token";
 
 export const signIn = async (req: express.Request, res: express.Response) => {
   const { email, password } = req.body;
@@ -30,7 +24,8 @@ export const signIn = async (req: express.Request, res: express.Response) => {
     const isMatch = await comparePasswords(password, user.password as string);
 
     if (isMatch) {
-      const token = tokenForUser(user);
+      const token = generateToken(user);
+      console.log(token);
 
       return res.send({
         token,
@@ -40,6 +35,7 @@ export const signIn = async (req: express.Request, res: express.Response) => {
       return res.status(401).json({ error: "Incorrect Credentials" });
     }
   } catch (error) {
+    console.log(error);
     return res.status(401).json({ error: "Incorrect Credentials" });
   }
 };
@@ -71,7 +67,7 @@ export const signUp = async (req: express.Request, res: express.Response) => {
     },
   });
 
-  return res.json({ user, token: tokenForUser(user) });
+  return res.json({ user, token: generateToken(user) });
 };
 
 export const verify = (req: express.Request, res: express.Response) => {
