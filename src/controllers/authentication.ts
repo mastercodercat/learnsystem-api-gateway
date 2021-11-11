@@ -25,7 +25,6 @@ export const signIn = async (req: express.Request, res: express.Response) => {
 
     if (isMatch) {
       const token = generateToken(user);
-      console.log(token);
 
       return res.send({
         token,
