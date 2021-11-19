@@ -6,7 +6,7 @@ import { v2_users } from "@prisma/client";
 import config from "../config";
 
 export const generateToken = (user: v2_users) => {
-  const pathToKey = path.join(__dirname, "../", config.appPrivKey);
+  const pathToKey = path.join(config.appPrivKey);
   const PRIV_KEY = fs.readFileSync(pathToKey, "utf8");
 
   const timestamp = new Date().getTime();
@@ -17,6 +17,6 @@ export const generateToken = (user: v2_users) => {
 };
 
 export const getPublicKey = () => {
-  const pathToKey = path.join(__dirname, "../", config.appPubKey);
+  const pathToKey = path.join(config.appPubKey);
   return fs.readFileSync(pathToKey, "utf8");
 };
