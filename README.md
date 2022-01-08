@@ -1,6 +1,6 @@
-# MindPrintLearning API Gateway
+# LearnSystem API Gateway
 
-Source of truth route list and forwarding to microservices. This is for auth gate in MindPrintLearning application.
+Source of truth route list and forwarding to microservices. This is for auth gate in LearnSystem application.
 
 ## Application Dependencies
 
@@ -9,12 +9,6 @@ Source of truth route list and forwarding to microservices. This is for auth gat
 - Prisma
 
 - TypeScript
-
-## Import CSV data to database
-
-run `npx prisma db seed` to import csv data to development database
-
-CSV files are in `prisma` folder inside the repository.
 
 ## How to start
 
